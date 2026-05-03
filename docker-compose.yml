@@ -1,12 +1,35 @@
+# Creamos una red virtual dedicada para la capa web
+networks:
+  proxy-tier:
+    driver: bridge
+
 services:
-  nginx-proxy-manager:
+  # La Torre de Control: Nginx Proxy Manager
+  npm:
     image: 'jc21/nginx-proxy-manager:latest'
     container_name: web_commander
     restart: always
     ports:
-      - '80:80'   # Tráfico HTTP
-      - '81:81'   # Panel de Administración Web
-      - '443:443' # Tráfico HTTPS (SSL)
+      - "80:80"     # Tráfico HTTP entrante
+      - "81:81"     # Panel de Administración (GUI)
+      - "443:443"   # Tráfico HTTPS (SSL)
     volumes:
-      - ./data:/data
-      - ./letsencrypt:/etc/letsencrypt
+      - ./npm_data:/data
+      - ./npm_letsencrypt:/etc/letsencrypt
+    networks:
+      - proxy-tier
+
+  # Nuestro Panel de Base de Datos
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: pma_panel
+    restart: always
+    # Eliminamos la directiva 'ports' por completo. 
+    # Solo NPM podrá verlo a través de la red 'proxy-tier'
+    environment:
+      - PMA_HOST=192.168.56.10
+      - PMA_PORT=3306
+      - PMA_USER=pipeline_user
+      - PMA_PASSWORD=pipeline_password
+    networks:
+      - proxy-tier
