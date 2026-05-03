@@ -1,35 +1,54 @@
-# Creamos una red virtual dedicada para la capa web
 networks:
   proxy-tier:
     driver: bridge
 
 services:
-  # La Torre de Control: Nginx Proxy Manager
+  # 1. Torre de Control de Red
   npm:
     image: 'jc21/nginx-proxy-manager:latest'
     container_name: web_commander
     restart: always
     ports:
-      - "80:80"     # Tráfico HTTP entrante
-      - "81:81"     # Panel de Administración (GUI)
-      - "443:443"   # Tráfico HTTPS (SSL)
+      - "80:80"
+      - "81:81"
+      - "443:443"
     volumes:
       - ./npm_data:/data
       - ./npm_letsencrypt:/etc/letsencrypt
     networks:
       - proxy-tier
 
-  # Nuestro Panel de Base de Datos
+  # 2. Telemetría SQL Directa
   phpmyadmin:
     image: phpmyadmin:latest
     container_name: pma_panel
     restart: always
-    # Eliminamos la directiva 'ports' por completo. 
-    # Solo NPM podrá verlo a través de la red 'proxy-tier'
     environment:
       - PMA_HOST=192.168.56.10
       - PMA_PORT=3306
       - PMA_USER=pipeline_user
       - PMA_PASSWORD=pipeline_password
+    networks:
+      - proxy-tier
+
+  # 3. Panel CRUD y Análisis de Datos
+  appsmith:
+    image: index.docker.io/appsmith/appsmith-ce
+    container_name: data_crud_panel
+    restart: always
+    volumes:
+      - ./appsmith_data:/appsmith-stacks
+    networks:
+      - proxy-tier
+
+  # 4. Motor Visual de Geometría y Mallas
+  streamlit:
+    image: python:3.10-slim
+    container_name: geometry_engine
+    restart: always
+    volumes:
+      - ./streamlit_app:/app
+    working_dir: /app
+    command: bash -c "pip install streamlit --quiet && streamlit run app.py --server.port 8501 --server.address 0.0.0.0"
     networks:
       - proxy-tier
