@@ -1,25 +1,12 @@
 services:
-  nginx:
-    image: nginx:stable-alpine
-    container_name: nginx_proxy
+  nginx-proxy-manager:
+    image: 'jc21/nginx-proxy-manager:latest'
+    container_name: web_commander
     restart: always
     ports:
-      - "80:80"
+      - '80:80'   # Tráfico HTTP
+      - '81:81'   # Panel de Administración Web
+      - '443:443' # Tráfico HTTPS (SSL)
     volumes:
-      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
-    depends_on:
-      - phpmyadmin
-
-  phpmyadmin:
-    image: phpmyadmin:latest
-    container_name: pma_panel
-    restart: always
-    # Eliminamos 'ports' (ya no es accesible por el 8080)
-    # Usamos 'expose' para que solo Nginx pueda verlo internamente
-    expose:
-      - "80"
-    environment:
-      - PMA_HOST=192.168.56.10
-      - PMA_PORT=3306
-      - PMA_USER=pipeline_user
-      - PMA_PASSWORD=pipeline_password
+      - ./data:/data
+      - ./letsencrypt:/etc/letsencrypt
