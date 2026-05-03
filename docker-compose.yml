@@ -1,0 +1,15 @@
+services:
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: pma_panel
+    restart: always
+    ports:
+      # Exponemos temporalmente en el 8080 (hasta que instalemos Nginx en el 80)
+      - "8080:80"
+    environment:
+      # Apuntamos el radar hacia el nodo de la base de datos
+      - PMA_HOST=192.168.56.10
+      - PMA_PORT=3306
+      # Credenciales de acceso de nuestro pipeline
+      - PMA_USER=pipeline_user
+      - PMA_PASSWORD=pipeline_password
